@@ -1,5 +1,8 @@
 const API_URL = 'http://localhost:5140/api';
 
+// Import cart functions
+import { updateCartCount } from './cart.js';
+
 // Utility to fetch with Auth
 async function fetchWithAuth(url, options = {}) {
     const token = localStorage.getItem('token');
@@ -62,12 +65,16 @@ function renderHeader() {
     }
 
     // Add Cart link
-    links += `<li><a href="#" id="cart-btn">🛒 <span id="cart-count">0</span></a></li>`;
+    links += `<li><a href="cart.html">🛒 <span id="cart-count">0</span></a></li>`;
 
     nav.innerHTML = `
         <div class="logo">SexShop Deluxe</div>
         <ul class="nav-links">${links}</ul>
     `;
+
+    // Update cart count after rendering
+    updateCartCount();
 }
 
 document.addEventListener('DOMContentLoaded', renderHeader);
+

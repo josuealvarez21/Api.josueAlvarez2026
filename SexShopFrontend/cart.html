@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito - SexShop Deluxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav id="main-nav">
+                <!-- Injected via JS -->
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 40px; min-height: 70vh;">
+        <h1 style="margin-bottom: 30px; color: var(--primary-color);">🛒 Mi Carrito</h1>
+
+        <div id="cart-content" style="display: grid; grid-template-columns: 1fr 350px; gap: 30px;">
+            <!-- Cart items will be injected here -->
+            <div id="cart-items">
+                <div class="glass-panel" style="padding: 40px; text-align: center;">
+                    Cargando carrito...
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <aside>
+                <div class="glass-panel" style="padding: 25px; position: sticky; top: 100px;">
+                    <h3 style="margin-bottom: 20px;">Resumen del Pedido</h3>
+                    <div
+                        style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Subtotal:</span>
+                            <span id="cart-subtotal">$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Envío:</span>
+                            <span style="color: var(--primary-color);">GRATIS</span>
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; margin-bottom: 20px;">
+                        <span>Total:</span>
+                        <span id="cart-total" style="color: var(--primary-color);">$0.00</span>
+                    </div>
+                    <button id="checkout-btn" class="btn btn-primary" style="width: 100%;">
+                        Proceder al Pago
+                    </button>
+                    <a href="index.html" class="btn btn-secondary"
+                        style="width: 100%; margin-top: 10px; text-align: center;">
+                        Seguir Comprando
+                    </a>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+    <script type="module">
+        import { getCart, updateQuantity, removeFromCart, getCartTotal, clearCart } from './cart.js';
+
+        function renderCart() {
+            const cart = getCart();
+            const cartItemsContainer = document.getElementById('cart-items');
+            const subtotalElement = document.getElementById('cart-subtotal');
+            const totalElement = document.getElementById('cart-total');
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = `
+                    <div class="glass-panel" style="padding: 60px; text-align: center;">
+                        <h2 style="margin-bottom: 20px; opacity: 0.7;">Tu carrito está vacío</h2>
+                        <p style="margin-bottom: 30px; color: #aaa;">¡Agrega algunos productos para comenzar!</p>
+                        <a href="index.html" class="btn btn-primary">Ir a la Tienda</a>
+                    </div>
+                `;
+                document.getElementById('cart-content').style.gridTemplateColumns = '1fr';
+                return;
+            }
+
+            const total = getCartTotal();
+            subtotalElement.textContent = `$${total.toFixed(2)}`;
+            totalElement.textContent = `$${total.toFixed(2)}`;
+
+            cartItemsContainer.innerHTML = cart.map(item => `
+                <div class="cart-item glass-panel" style="display: flex; gap: 20px; padding: 20px; margin-bottom: 15px; align-items: center;">
+                    <img src="${item.imageUrl || 'https://via.placeholder.com/100'}" 
+                         alt="${item.name}" 
+                         style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                    
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 5px;">${item.name}</h3>
+                        <p style="color: var(--primary-color); font-weight: 700; font-size: 1.1rem;">$${item.price.toFixed(2)}</p>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="btn btn-secondary quantity-btn" onclick="changeQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                        <span style="min-width: 30px; text-align: center; font-weight: 600;">${item.quantity}</span>
+                        <button class="btn btn-secondary quantity-btn" onclick="changeQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                    </div>
+
+                    <div style="text-align: right; min-width: 100px;">
+                        <p style="font-weight: 700; font-size: 1.1rem; margin-bottom: 10px;">$${(item.price * item.quantity).toFixed(2)}</p>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem; background: rgba(255,0,0,0.2); border-color: red;" onclick="removeItem(${item.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.changeQuantity = (productId, newQuantity) => {
+            updateQuantity(productId, newQuantity);
+            renderCart();
+        };
+
+        window.removeItem = (productId) => {
+            if (confirm('¿Eliminar este producto del carrito?')) {
+                removeFromCart(productId);
+                renderCart();
+            }
+        };
+
+        // Checkout functionality
+        document.getElementById('checkout-btn').addEventListener('click', async () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+
+            if (!token || !user.id) {
+                alert('Debes iniciar sesión para realizar una compra');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const cart = getCart();
+            if (cart.length === 0) {
+                alert('Tu carrito está vacío');
+                return;
+            }
+
+            const orderData = {
+                orderDetails: cart.map(item => ({
+                    productId: item.id,
+                    quantity: item.quantity
+                }))
+            };
+
+            try {
+                const response = await fetch('http://localhost:5140/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.ok) {
+                    const order = await response.json();
+                    alert(`¡Pedido realizado con éxito! Número de orden: #${order.id}`);
+                    clearCart();
+                    renderCart();
+                } else {
+                    const error = await response.text();
+                    alert(`Error al procesar el pedido: ${error}`);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión. Verifica que el servidor esté corriendo.');
+            }
+        });
+
+        renderCart();
+    </script>
+</body>
+
+</html>

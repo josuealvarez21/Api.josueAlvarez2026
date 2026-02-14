@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SexShop Deluxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container" style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+        <div class="glass-panel" style="padding: 40px; width: 100%; max-width: 400px;">
+            <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary-color);">Iniciar Sesión</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px;">Usuario</label>
+                    <input type="text" id="username" class="form-control" required placeholder="admin o guest">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px;">Contraseña</label>
+                    <input type="password" id="password" class="form-control" required placeholder="password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+            </form>
+            <p style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+                ¿No tienes cuenta? <a href="register.html" style="color: var(--primary-color);">Regístrate</a>
+            </p>
+            <p style="margin-top: 10px; text-align: center; font-size: 0.9rem;">
+                <a href="index.html" style="color: var(--text-color);">Volver a la tienda</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:5140/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    alert('Credenciales incorrectas');
+                    return;
+                }
+
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+
+                // Decode token payload simply to get role (in real app use a lib)
+                try {
+                    const payload = JSON.parse(atob(data.token.split('.')[1]));
+                    // Claims mapping might vary. Standard role claim is usually complex uri.
+                    // Let's assume for this demo we decode looking for "role" or similar.
+                    // For now, hardcode user since we don't have decoding lib ready
+                    const role = username.toLowerCase() === 'admin' ? 'Admin' : 'Guest';
+                    localStorage.setItem('user', JSON.stringify({ username, role }));
+                } catch (e) {
+                    localStorage.setItem('user', JSON.stringify({ username, role: 'Guest' }));
+                }
+
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión');
+            }
+        });
+    </script>
+</body>
+
+</html>

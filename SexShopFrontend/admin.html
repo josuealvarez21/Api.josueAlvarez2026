@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - SexShop Deluxe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav id="main-nav">
+                <!-- Injected via JS -->
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 40px;">
+        <h1 style="margin-bottom: 30px; color: var(--primary-color);">Panel de Administración</h1>
+
+        <div class="dashboard-grid">
+            <aside class="sidebar glass-panel">
+                <ul style="list-style: none;">
+                    <li style="margin-bottom: 15px;">
+                        <a href="#" class="btn btn-secondary" style="width: 100%; text-align: left;"
+                            onclick="showSection('products')">📦 Productos</a>
+                    </li>
+                    <li>
+                        <a href="#" class="btn btn-secondary" style="width: 100%; text-align: left;"
+                            onclick="showSection('orders')">🛒 Órdenes</a>
+                    </li>
+                </ul>
+            </aside>
+
+            <main class="glass-panel" style="padding: 30px; position: relative;">
+                <!-- Modal for Product Form -->
+                <div id="product-modal" class="glass-panel"
+                    style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; z-index: 1000; width: 400px; box-shadow: 0 0 50px rgba(0,0,0,0.5); background: #2a2a2a;">
+                    <h3 id="modal-title" style="margin-bottom: 20px;">Nuevo Producto</h3>
+                    <form id="product-form">
+                        <input type="hidden" id="p-id">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="p-name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio</label>
+                            <input type="number" step="0.01" id="p-price" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            <input type="number" id="p-stock" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <input type="text" id="p-category" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>URL Imagen</label>
+                            <input type="text" id="p-image" class="form-control">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+                            <button type="button" class="btn btn-secondary" style="flex: 1;"
+                                onclick="closeModal()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="products-section">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Gestión de Productos</h2>
+                        <button class="btn btn-primary" onclick="openModal()">+ Nuevo Producto</button>
+                    </div>
+                    <div id="products-list">Cargando...</div>
+                </div>
+
+                <div id="orders-section" style="display: none;">
+                    <h2>Órdenes Recientes</h2>
+                    <div id="orders-list">Cargando...</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script type="module">
+        import './app.js';
+
+        // Check Admin Role
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'Admin') {
+            alert('Acceso denegado. Solo administradores.');
+            window.location.href = 'index.html';
+        }
+
+        // Functions
+        window.showSection = (sectionId) => {
+            document.getElementById('products-section').style.display = 'none';
+            document.getElementById('orders-section').style.display = 'none';
+            document.getElementById(`${sectionId}-section`).style.display = 'block';
+        };
+
+        window.openModal = (product = null) => {
+            const modal = document.getElementById('product-modal');
+            const title = document.getElementById('modal-title');
+
+            if (product) {
+                title.textContent = 'Editar Producto';
+                document.getElementById('p-id').value = product.id;
+                document.getElementById('p-name').value = product.name;
+                document.getElementById('p-price').value = product.price;
+                document.getElementById('p-stock').value = product.stock;
+                document.getElementById('p-category').value = product.category;
+                document.getElementById('p-image').value = product.imageUrl;
+            } else {
+                title.textContent = 'Nuevo Producto';
+                document.getElementById('product-form').reset();
+                document.getElementById('p-id').value = '';
+            }
+            modal.style.display = 'block';
+        };
+
+        window.closeModal = () => {
+            document.getElementById('product-modal').style.display = 'none';
+        };
+
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('p-id').value;
+            const product = {
+                name: document.getElementById('p-name').value,
+                price: parseFloat(document.getElementById('p-price').value),
+                stock: parseInt(document.getElementById('p-stock').value),
+                category: document.getElementById('p-category').value,
+                imageUrl: document.getElementById('p-image').value,
+                description: "Descripción genérica" // Add description field if needed
+            };
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `http://localhost:5140/api/products/${id}` : 'http://localhost:5140/api/products';
+            const token = localStorage.getItem('token');
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(product)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadProducts();
+                    alert('Producto guardado');
+                } else {
+                    alert('Error al guardar');
+                }
+            } catch (err) { console.error(err); }
+        });
+
+        async function loadProducts() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5140/api/products');
+                const products = await response.json();
+
+                // Store products in window for edit access if needed, or pass directly
+                window.allProducts = products;
+
+                const list = document.getElementById('products-list');
+                list.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; border-bottom: 1px solid var(--glass-border);">
+                                <th style="padding: 10px;">ID</th>
+                                <th style="padding: 10px;">Nombre</th>
+                                <th style="padding: 10px;">Precio</th>
+                                <th style="padding: 10px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${products.map((p, index) => `
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 10px;">${p.id}</td>
+                                    <td style="padding: 10px;">${p.name}</td>
+                                    <td style="padding: 10px;">$${p.price}</td>
+                                    <td style="padding: 10px;">
+                                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; margin-right: 5px;" onclick='openModal(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Editar</button>
+                                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; background: rgba(255,0,0,0.2); border-color: red;" onclick="deleteProduct(${p.id})">Eliminar</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadOrders() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5140/api/orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    document.getElementById('orders-list').innerHTML = 'Error cargando órdenes (¿Eres Admin?)';
+                    return;
+                }
+
+                const orders = await response.json();
+                const list = document.getElementById('orders-list');
+
+                list.innerHTML = orders.length ? orders.map(o => `
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong>Orden #${o.id}</strong>
+                            <span>${new Date(o.orderDate).toLocaleDateString()}</span>
+                        </div>
+                        <p>Cliente: ${o.user?.username || 'Desconocido'}</p>
+                        <p>Total: <strong style="color: var(--primary-color)">$${o.totalAmount}</strong></p>
+                        <p>Estado: ${o.status}</p>
+                    </div>
+                `).join('') : 'No hay órdenes.';
+
+            } catch (e) { console.error(e); }
+        }
+
+        window.deleteProduct = async (id) => {
+            if (!confirm('¿Eliminar producto?')) return;
+            const token = localStorage.getItem('token');
+            await fetch(`http://localhost:5140/api/products/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            loadProducts();
+        };
+
+        loadProducts();
+        loadOrders();
+    </script>
+</body>
+
+</html>

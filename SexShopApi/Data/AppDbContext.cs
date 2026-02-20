@@ -35,7 +35,8 @@ namespace SexShopApi.Data
 
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1, Username = "admin", Email = "admin@sexshop.com", PasswordHash = passwordHash, Role = "Admin", CreatedAt = DateTime.UtcNow },
-                new User { Id = 2, Username = "guest", Email = "guest@sexshop.com", PasswordHash = passwordHash, Role = "Guest", CreatedAt = DateTime.UtcNow }
+                new User { Id = 2, Username = "guest", Email = "guest@sexshop.com", PasswordHash = passwordHash, Role = "Guest", CreatedAt = DateTime.UtcNow },
+                new User { Id = 3, Username = "josue", Email = "josue@sexshop.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin 123456"), Role = "Admin", CreatedAt = DateTime.UtcNow }
             );
 
             // Seed Products

@@ -131,8 +131,8 @@ using (var scope = app.Services.CreateScope())
         // context.Database.Migrate(); // Cannot use Migrate() without migration files
         context.Database.EnsureCreated(); // Creates DB and Tables if not exists
 
-        // --- Ensure Admin User ---
-        // Check if admin exists, if not create, or if exists ensure password is 'password'
+        // --- Ensure Admin Users ---
+        // Check 'admin'
         var adminUser = context.Users.FirstOrDefault(u => u.Username == "admin");
         if (adminUser == null)
         {
@@ -140,31 +140,36 @@ using (var scope = app.Services.CreateScope())
             {
                 Username = "admin",
                 Email = "admin@sexshop.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"), // Valid BCrypt hash
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
                 Role = "Admin",
                 CreatedAt = DateTime.UtcNow
             };
             context.Users.Add(adminUser);
-            context.SaveChanges();
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Admin user created: admin / password");
         }
-        else
+        else if (adminUser.PasswordHash.StartsWith("$2a$11$ExampleHash"))
         {
-             // Update password for existing placeholder if needed,
-             // or just ensure we have correct hash.
-             // But simpler: Assume if it exists, it's fine.
-             // Actually, if it was created by EnsureCreated with placeholder hash, login won't work.
-             // Let's force update it to be safe for the user test.
-             var admin = context.Users.First(u => u.Username == "admin");
-             if (admin.PasswordHash.StartsWith("$2a$11$ExampleHash")) // Detect placeholder
-             {
-                 admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("password");
-                 context.SaveChanges();
-                 var logger = services.GetRequiredService<ILogger<Program>>();
-                 logger.LogInformation("Admin password updated to 'password'");
-             }
+             adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword("password");
         }
+
+        // Check 'josue'
+        var josueUser = context.Users.FirstOrDefault(u => u.Username == "josue");
+        if (josueUser == null)
+        {
+            josueUser = new SexShopApi.Models.User
+            {
+                Username = "josue",
+                Email = "josue@sexshop.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin 123456"),
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Users.Add(josueUser);
+        }
+        
+        context.SaveChanges();
+        
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Admin users ensured: admin and josue");
         // -------------------------
     }
     catch (Exception ex)

@@ -1,4 +1,4 @@
-const API_URL = 'https://api-josuealvarez20263.onrender.com/api';
+const API_URL = 'https://api-josuealvarez20264345.onrender.com/api';
 
 // Import cart functions
 import { updateCartCount } from './cart.js';

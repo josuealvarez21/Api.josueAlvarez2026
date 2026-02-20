@@ -6,6 +6,6 @@ namespace SexShopApi.Services
     public interface IAuthService
     {
         Task<User?> RegisterAsync(RegisterDto dto);
-        Task<string?> LoginAsync(LoginDto dto);
+        Task<LoginResponseDto?> LoginAsync(LoginDto dto);
     }
 }

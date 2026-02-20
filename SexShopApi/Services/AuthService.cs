@@ -39,13 +39,21 @@ namespace SexShopApi.Services
             return user;
         }
 
-        public async Task<string?> LoginAsync(LoginDto dto)
+        public async Task<LoginResponseDto?> LoginAsync(LoginDto dto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == dto.Username);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return null;
 
-            return GenerateJwtToken(user);
+            var token = GenerateJwtToken(user);
+
+            return new LoginResponseDto
+            {
+                Token = token,
+                Id = user.Id,
+                Username = user.Username,
+                Role = user.Role
+            };
         }
 
         private string GenerateJwtToken(User user)

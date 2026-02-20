@@ -52,20 +52,13 @@
                     return;
                 }
 
-                const data = await response.json();
-                localStorage.setItem('token', data.token);
-
-                // Decode token payload simply to get role (in real app use a lib)
-                try {
-                    const payload = JSON.parse(atob(data.token.split('.')[1]));
-                    // Claims mapping might vary. Standard role claim is usually complex uri.
-                    // Let's assume for this demo we decode looking for "role" or similar.
-                    // For now, hardcode user since we don't have decoding lib ready
-                    const role = username.toLowerCase() === 'admin' ? 'Admin' : 'Guest';
-                    localStorage.setItem('user', JSON.stringify({ username, role }));
-                } catch (e) {
-                    localStorage.setItem('user', JSON.stringify({ username, role: 'Guest' }));
-                }
+                const responseData = await response.json();
+                localStorage.setItem('token', responseData.token);
+                localStorage.setItem('user', JSON.stringify({
+                    id: responseData.id,
+                    username: responseData.username,
+                    role: responseData.role
+                }));
 
                 window.location.href = 'index.html';
 

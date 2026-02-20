@@ -28,11 +28,11 @@ namespace SexShopApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var token = await _authService.LoginAsync(dto);
-            if (token == null)
+            var response = await _authService.LoginAsync(dto);
+            if (response == null)
                 return Unauthorized("Invalid credentials");
 
-            return Ok(new { token });
+            return Ok(response);
         }
     }
 }

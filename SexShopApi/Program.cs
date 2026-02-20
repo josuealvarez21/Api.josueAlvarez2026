@@ -19,13 +19,23 @@ builder.Services.AddEndpointsApiExplorer();
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "*" };
+    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials(); // Often needed for auth tokens if using cookies, but good to have
+            }
+            else
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
         });
 });
 
